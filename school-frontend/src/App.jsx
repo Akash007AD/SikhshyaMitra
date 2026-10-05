@@ -5,6 +5,7 @@ import Login from './components/Login'
 import Signup from './components/Signup'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
+import StudentsView from './components/StudentsView'
 import Landing from './components/Landing'
 
 // Set your Google OAuth Client ID here (or via .env as VITE_GOOGLE_CLIENT_ID)
@@ -12,6 +13,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-client-i
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token') || null)
+  const [activeTab, setActiveTab] = useState('standards') // 'standards' | 'students'
   // PENDING_VERIFICATION | DOCS_SUBMITTED | TRIAL | VERIFIED
   const [verificationStatus, setVerificationStatus] = useState(
     () => localStorage.getItem('verificationStatus') || null
@@ -66,8 +68,12 @@ export default function App() {
             element={
               token ? (
                 <div className="app-container">
-                  <Sidebar setToken={handleLogout} />
-                  <Dashboard token={token} verificationStatus={verificationStatus} />
+                  <Sidebar setToken={handleLogout} activeTab={activeTab} setActiveTab={setActiveTab} />
+                  {activeTab === 'standards' ? (
+                    <Dashboard token={token} verificationStatus={verificationStatus} />
+                  ) : (
+                    <StudentsView />
+                  )}
                 </div>
               ) : (
                 <Navigate to="/login" />
