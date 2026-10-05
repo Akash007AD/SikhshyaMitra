@@ -12,4 +12,10 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     
     // Spring Data JPA will automatically write the SQL query for this!
     Optional<Tenant> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
+
+    boolean existsByUdiseCode(String udiseCode);
+
+    Optional<Tenant> findByUdiseCode(String udiseCode);
 }

@@ -139,17 +139,32 @@ public class AuthService {
         // Password strength
         validatePasswordStrength(password);
 
+        // Subdomain deduplication check
+        String slug = host.split("\\.")[0].toLowerCase().trim();
+        if (tenantRepository.existsBySlug(slug)) {
+            throw new IllegalArgumentException("Subdomain '" + slug + "' is already registered. Please choose a different subdomain.");
+        }
+
         // School name deduplication (fuzzy, Levenshtein ≤ 2)
         checkSchoolNameConflict(schoolName);
 
-        // UDISE format check (11 digits, if provided)
-        if (udiseCode != null && !udiseCode.isEmpty() && !udiseCode.matches("\\d{11}")) {
-            throw new IllegalArgumentException("UDISE code must be exactly 11 digits");
+        // UDISE format and uniqueness check (Ministry of Education 11-digit school identifier)
+        if (udiseCode != null && !udiseCode.trim().isEmpty()) {
+            udiseCode = udiseCode.trim();
+            if (!udiseCode.matches("\\d{11}")) {
+                throw new IllegalArgumentException("UDISE code must be exactly 11 digits");
+            }
+            if (tenantRepository.existsByUdiseCode(udiseCode)) {
+                throw new IllegalArgumentException(
+                    "A school is already registered with UDISE code " + udiseCode + 
+                    ". Duplicate website registration for the same school is strictly prohibited. If this is your school, please contact support@sikhshyamitra.in"
+                );
+            }
         }
 
         // 1. Create Tenant — starts in PENDING_VERIFICATION, not ACTIVE
         Tenant tenant = new Tenant();
-        tenant.setSlug(host.split("\\.")[0]);
+        tenant.setSlug(slug);
         tenant.setName(schoolName);
         tenant.setStatus("PROVISIONING");  // Lifecycle status
         tenant.setVerificationStatus("PENDING_VERIFICATION"); // Verification status
