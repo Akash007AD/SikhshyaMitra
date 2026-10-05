@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: school-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      # This script runs on startup to create all the separate databases
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+  school-gateway:
+    build:
+      context: ./school-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - spring.cloud.gateway.server.webmvc.routes[0].uri=http://school-auth:8081
+      - spring.cloud.gateway.server.webmvc.routes[1].uri=http://school-academic:8082
+      - school.auth.url=http://school-auth:8081
+    depends_on:
+      - school-auth
+      - school-academic
+
+  school-auth:
+    build:
+      context: ./school-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - spring.datasource.url=jdbc:mysql://mysql:3306/sp_auth?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    depends_on:
+      - mysql
+
+  school-academic:
+    build:
+      context: ./school-academic
+    ports:
+      - "8082:8082"
+    environment:
+      - spring.datasource.url=jdbc:mysql://mysql:3306/sp_academic?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    depends_on:
+      - mysql
+
+volumes:
+  mysql-data:
