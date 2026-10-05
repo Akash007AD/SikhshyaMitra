@@ -6,6 +6,9 @@ import Signup from './components/Signup'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import StudentsView from './components/StudentsView'
+import AttendanceView from './components/AttendanceView'
+import StaffView from './components/StaffView'
+import ExamsView from './components/ExamsView'
 import Landing from './components/Landing'
 
 // Set your Google OAuth Client ID here (or via .env as VITE_GOOGLE_CLIENT_ID)
@@ -13,7 +16,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-client-i
 
 export default function App() {
   const [token, setToken] = useState(() => localStorage.getItem('token') || null)
-  const [activeTab, setActiveTab] = useState('standards') // 'standards' | 'students'
+  const [activeTab, setActiveTab] = useState('standards') // 'standards' | 'students' | 'attendance' | 'staff' | 'exams'
   // PENDING_VERIFICATION | DOCS_SUBMITTED | TRIAL | VERIFIED
   const [verificationStatus, setVerificationStatus] = useState(
     () => localStorage.getItem('verificationStatus') || null
@@ -45,6 +48,22 @@ export default function App() {
     setVerificationStatus(null)
   }
 
+  const renderActiveView = () => {
+    switch (activeTab) {
+      case 'students':
+        return <StudentsView />
+      case 'attendance':
+        return <AttendanceView />
+      case 'staff':
+        return <StaffView />
+      case 'exams':
+        return <ExamsView />
+      case 'standards':
+      default:
+        return <Dashboard token={token} verificationStatus={verificationStatus} />
+    }
+  }
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter>
@@ -69,11 +88,7 @@ export default function App() {
               token ? (
                 <div className="app-container">
                   <Sidebar setToken={handleLogout} activeTab={activeTab} setActiveTab={setActiveTab} />
-                  {activeTab === 'standards' ? (
-                    <Dashboard token={token} verificationStatus={verificationStatus} />
-                  ) : (
-                    <StudentsView />
-                  )}
+                  {renderActiveView()}
                 </div>
               ) : (
                 <Navigate to="/login" />
